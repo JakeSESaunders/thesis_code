@@ -1,0 +1,1 @@
+The function hurewicz_image_via_BO_coaction is slow on old versions of sympy. If the program is running slowly, that may be why.

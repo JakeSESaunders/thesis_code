@@ -1,6 +1,7 @@
 from rings.polynomial import PolyRing
 from combinatorics.indices import is_one_less_than_power_of_two
 from functools import cache
+from rings.tensor import Tensor
 
 class BaseDualSteenrod(PolyRing):
   def is_valid_generator(i):
@@ -13,6 +14,15 @@ class DualSteenrod(BaseDualSteenrod):
 
   def xi(i):
     return DualSteenrod([(2**i - 1, )])
+
+class DualSteenrodTensorSquare(Tensor):
+  @classmethod
+  def get_basis(cls, degree):
+    return super().get_basis(DualSteenrod, DualSteenrod, degree)
+
+  @classmethod
+  def one(cls, R=DualSteenrod, S=DualSteenrod):
+    return DualSteenrodTensorSquare([(DualSteenrod.one(), DualSteenrod.one())])
 
 class DualSteenrodConjugate(BaseDualSteenrod):
   def symbol(i):

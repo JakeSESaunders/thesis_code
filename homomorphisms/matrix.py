@@ -72,9 +72,10 @@ def inverse(f, s, R):
   if len(s.summands) == 0:
     return R.zero()
   if not len(s.summands) == 1:
-    return sum([dual(f, x, R) for x in s.get_summands_as_polys()], R.zero())
+    return sum([inverse(f, x, R) for x in s.get_summands_as_polys()], R.zero())
 
   degree = s.max_degree()
   M = Matrix(to_matrix(f, R, S, degree))
   M_inv = M.inv_mod(2)
-  return from_matrix(M, S, R, degree)(s)
+  M_inv = np.array(M_inv)
+  return from_matrix(M_inv, S, R, degree)(s)

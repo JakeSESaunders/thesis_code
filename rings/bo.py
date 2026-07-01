@@ -54,3 +54,10 @@ class HomologyMOManifoldBasis(PolyRing):
 
   def M(i):
     return HomologyMOManifoldBasis.generator(i)
+
+class HomologyMOBinaryBasis(PolyRing):
+  def symbol(i):
+    return f"[B_{i}]" # TODO
+
+  def B(i):
+    return HomologyMOBinaryBasis.generator(i)

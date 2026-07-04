@@ -1,9 +1,9 @@
-from rings.polynomial import PolyRing
+from rings.polynomial import NatPolyRing
 from combinatorics.indices import is_one_less_than_power_of_two
 from functools import cache
 from rings.tensor import Tensor
 
-class BaseDualSteenrod(PolyRing):
+class BaseDualSteenrod(NatPolyRing):
   def is_valid_generator(i):
     return (is_one_less_than_power_of_two(i) is not None)
 

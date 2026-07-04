@@ -3,7 +3,6 @@ from math import factorial, isclose
 # Given a list of coefficients ll, return the multinomial (generalised binomial)
 # coefficient given by sum(ll)!/(ll[0]! x ... x ll[-1]!).
 # NOTE responds badly to negative inputs.
-# TODO have it compute these mod 2, which is a lot faster as it only invoves xoring bits.
 def multinomial(ll):
   numerator = factorial(sum(ll))
   denominator = 1

@@ -1,16 +1,16 @@
-from rings.polynomial import PolyRing
+from rings.polynomial import NatPolyRing
 from rings.tensor import Tensor
 from combinatorics.indices import is_one_less_than_power_of_two, get_dold_manifold_indices_for_degree
 from config import DISPLAY_DOLD_MANIFOLD_INDICES_MANIFOLD_BASIS
 
-class HomologyMO(PolyRing):
+class HomologyMO(NatPolyRing):
   def symbol(i):
     return f"e_{i}"
 
   def e(i):
     return HomologyMO.generator(i)
 
-class CohomologyBO(PolyRing):
+class CohomologyBO(NatPolyRing):
   def symbol(i):
     return f"w_{i}"
 
@@ -41,21 +41,21 @@ def get_manifold_basis_symbol(i):
     return "(Q_1e_1)"
   return f"(Q_1^{index - 1}e_1)"
 
-class HomotopyMO(PolyRing):
+class HomotopyMO(NatPolyRing):
   def symbol(i):
     return get_manifold_basis_symbol(i)
 
   def is_valid_generator(i):
     return (is_one_less_than_power_of_two(i) is None)
 
-class HomologyMOManifoldBasis(PolyRing):
+class HomologyMOManifoldBasis(NatPolyRing):
   def symbol(i):
     return get_manifold_basis_symbol(i)
 
   def M(i):
     return HomologyMOManifoldBasis.generator(i)
 
-class HomologyMOBinaryBasis(PolyRing):
+class HomologyMOBinaryBasis(NatPolyRing):
   def symbol(i):
     return f"[B_{i}]" # TODO
 

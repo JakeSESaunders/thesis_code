@@ -1,6 +1,8 @@
 from collections import Counter
 from config import DEBUG
+from itertools import permutations
 
+# TODO update this file to use functools cache
 PARTITIONS = {}
 ENUMERATED = {}
 
@@ -55,6 +57,17 @@ def get_ordered_partitions(n):
     load_ordered_partitions(n)
   return PARTITIONS[n]
 
+def get_unordered_partitions(n):
+  ordered_partitions = get_ordered_partitions(n)
+  unordered_partitions = []
+  for partition in ordered_partitions:
+    perms = permutations(partition)
+    for perm in perms:
+      tuple_perm = tuple(perm)
+      if tuple_perm not in unordered_partitions:
+        unordered_partitions.append(tuple_perm)
+  return unordered_partitions
+
 def to_weighted_partition(partition, n):
   weights = Counter(partition)
   weighted_partition = []
@@ -94,7 +107,7 @@ def get_weighted_partitions(n):
   return weighted_partitions
 
 def total(partition):
-  return sum(list(partition)) # TODO do we have to put list here?
+  return sum(partition)
 
 def weighted_total(weighted_partition):
   total = 0

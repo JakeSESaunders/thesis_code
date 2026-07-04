@@ -1,9 +1,8 @@
 from rings.polynomial import PolyRing
 from functools import cache
 
-# Let R, S be polynomial rings. Let f be a function that takes a positive integer and returns an element s of S,
-# the idea being that f should send the ith generator of R to s.
-# Based on this, given an element r of R, give the corresponding element of s.
+# Let R, S be polynomial rings. Let f be a function that takes a generator of R and returns an element s of S.
+# image returns the extension of f to the entire ring R, not just the generators.
 @cache
 def image(f, r: PolyRing, S):
   no_summands = len(r.summands)

@@ -44,7 +44,7 @@ def adem_sequence_at(sequence, index):
       result.append(start + pair + end)
   return result
 
-# Given a sequence of integers, recursively apply the Adem relations to obtain an admissible sequence.
+# Given a sequence of integers, recursively apply the Adem relations to obtain a list of admissible sequences.
 def adem_sequence(sequence):
   if len(sequence) < 2:
       return sequence

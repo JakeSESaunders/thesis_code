@@ -9,6 +9,30 @@ class SModMod2(PolyRing):
   def is_valid_generator(I):
     return is_tuple_of_nondecreasing_positive_integers(I)
 
+  def a():
+    return SModMod2([
+        (
+          ()
+        )
+      ])
+
+  @classmethod
+  def generator(cls, I):
+    if I == 0:
+      return cls.one()
+
+    # deal with the case that some number of the leading terms is zero
+    leading_zeros = 0
+    while leading_zeros < len(I) and I[leading_zeros] == 0:
+      leading_zeros += 1
+
+    if leading_zeros == len(I):
+      return SModMod2.a()**(2**leading_zeros)
+
+    return cls([(
+      I[leading_zeros:], 
+    )])**(2**leading_zeros)
+
   @classmethod
   def degree(cls, I):
     if not cls.is_valid_generator(I):
@@ -67,6 +91,9 @@ class PowersOfTwo(PolyRing):
     for i in range(len(I)):
       operation = f"{operation}Q_{I[i]}"
     return f"{operation}{result}"
+
+  def x(i):
+    return PowersOfTwo.generator((i, ()))
 
   def Q(I, x):
     return PowersOfTwo.generator((x, I))

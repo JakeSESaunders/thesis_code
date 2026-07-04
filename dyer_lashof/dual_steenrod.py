@@ -1,5 +1,6 @@
 from rings.dual_steenrod import DualSteenrod
 from functools import cache
+from dyer_lashof.adem import adem_sequence
 
 def xi(i):
   return DualSteenrod.xi(i)

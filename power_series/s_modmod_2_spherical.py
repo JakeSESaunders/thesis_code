@@ -31,3 +31,11 @@ X_t_minus_1_over_t = (X.shift(-1).multiplicative_inverse() - PowerSeries.constan
 X1 = PowerSeries.constant(SModMod2.generator(()))
 
 u = Qx1.circ(X) + X_t_minus_1_over_t + X1
+
+# Returns a spherical class congruent to Q_ia mod decomposables.
+# Requires i > 1.
+def spherical(i):
+  if i < 1:
+    raise ValueError("There is no spherical class for Q1a.")
+  global u
+  return u.coeff(1 + i)

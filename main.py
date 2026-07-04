@@ -8,7 +8,8 @@ from homomorphisms.free_to_MO import free_to_MO
 from power_series.hessenberg import hessenberg, hessenberg_det
 from power_series.power_series import PowerSeries
 from combinatorics.partitions import get_unordered_partitions
-from power_series.powers_of_2_spherical import X, u1, u, Qx_2_pow_i
+from power_series.powers_of_2_spherical import X, u1
+from power_series.s_modmod_2_spherical import u, spherical
 
 @cache
 def xi_t_coeffs(d):
@@ -34,9 +35,9 @@ def xi_t_coeffs_power(k, d):
 
   return result
 
-# TODO this is not quite right, there should be no x_2 appearing in u_1(t).
+print("u(t) =", u)
 print("u_1(t) =", u1)
-print()
+""" print()
 for i in range(1, 4):
   print(f"u_{2**i}(t) =", u(i))
   print()
@@ -44,4 +45,8 @@ for i in range(1, 4):
 print(X)
 print()
 print(Qx_2_pow_i(0))
-print(Qx_2_pow_i(0).circ(X))
+print(Qx_2_pow_i(0).circ(X)) """
+
+for i in range(2, 10):
+  print(spherical(i))
+  print(u1.coeff(i + 1))

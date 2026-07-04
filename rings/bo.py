@@ -10,6 +10,18 @@ class HomologyMO(NatPolyRing):
   def e(i):
     return HomologyMO.generator(i)
 
+class EulerHomology(NatPolyRing):
+  def symbol(i):
+    if i != 2:
+      raise ValueError(f"Cannot find symbol for invalid generator {i}.")
+    return "t"
+
+  def is_valid_generator(i):
+    return (i == 2)
+
+  def t():
+    return EulerHomology.generator(2)
+
 class CohomologyBO(NatPolyRing):
   def symbol(i):
     return f"w_{i}"

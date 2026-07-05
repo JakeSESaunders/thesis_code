@@ -9,7 +9,7 @@ def free_to_MO_on_generators(P):
     raise ValueError(f"{P} does not describe a valid generator, so cannot give image.")
   x, I = P
   image_of_x = hurewicz_image(2**x)
-  return dyer_lashof(image_of_x, I, upper=False)
+  return dyer_lashof(I, image_of_x, upper=False)
 
 def free_to_MO(x : PowersOfTwo):
   return image(free_to_MO_on_generators, x, HomologyMO)

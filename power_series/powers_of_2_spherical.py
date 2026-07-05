@@ -46,3 +46,13 @@ u1 = Qx_2_pow_i(0).circ(X) + X_t_minus_1_over_t + X1
 
 def u(i):
   return Qx_2_pow_i(i).circ(X)
+
+
+def spherical(k, i):
+  if i == 0:
+    if k < 1:
+      raise ValueError("There is no spherical class for Q1a.")
+    global u1
+    return u1.coeff(2**i + k)
+
+  return u(i).coeff(2**i + k)

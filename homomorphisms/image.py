@@ -10,7 +10,7 @@ def image(f, r: PolyRing, S):
     return S.zero()
   if no_summands > 1:
     summands_as_polys = r.get_summands_as_polys()
-    return sum([image(f, summand, S) for summand in summands_as_polys], S.zero)
+    return sum([image(f, summand, S) for summand in summands_as_polys], S.zero())
   
   # We have a single summand only
   summand = r.summands[0]

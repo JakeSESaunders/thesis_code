@@ -30,7 +30,7 @@ def hurewicz_image_dold_manifold_dyer_lashof(n):
   if k < 2:
     raise ValueError(f"{2} = (n - 1)/2 < 2 is insufficiently large to make this calculation.")
   hurewicz_image_RPn = hurewicz_image_projective_space_lagrange_inversion(k)
-  return dyer_lashof(hurewicz_image_RPn, 1)
+  return dyer_lashof(1, hurewicz_image_RPn)
 
 def from_total_sw_class_to_sw_number_polynomial(total_sw_class: TruncPoly):
   result = CohomologyBO.zero()
@@ -73,7 +73,7 @@ def hurewicz_image_odd(n):
   index = is_one_less_than_power_of_two(n)
   if index is None:
     return hurewicz_image_dold_manifold_via_BO_coaction(n)
-  return dyer_lashof(HomologyMO.e(1), tuple([1 for i in range(index - 1)]))
+  return dyer_lashof(tuple([1 for i in range(index - 1)]), HomologyMO.e(1), upper=False)
 
 def hurewicz_image(n):
   return hurewicz_image_even(n) if (n % 2 == 0) else hurewicz_image_odd(n)

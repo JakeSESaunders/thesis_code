@@ -49,4 +49,4 @@ def dyer_lashof_single_indeterminate(n, k, upper=True):
     result += dyer_lashof_e_0_inverse(i) * dyer_lashof_e_k_one_component(j, k)
   return result
 
-dyer_lashof = lambda I, x, upper: extend_dl(dyer_lashof_single_indeterminate, I, x, upper)
+dyer_lashof = lambda I, x, upper=False: extend_dl(dyer_lashof_single_indeterminate, I, x, upper)

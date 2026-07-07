@@ -16,7 +16,7 @@ def extend_dl(dl_ops_for_generators, I, poly, upper=False):
     new_I = []
     for i in range(len(I)):
       new_I.insert(0, sum(new_I) + degree + I[-(i + 1)])
-    return extend_dl(dl_ops_for_generators, tuple(new_I), poly, upper=True)
+    return extend_dl(dl_ops_for_generators, tuple(new_I), poly, True)
 
   extend = lambda _I, _poly: extend_dl(dl_ops_for_generators, _I, _poly, upper)
   R = poly.__class__

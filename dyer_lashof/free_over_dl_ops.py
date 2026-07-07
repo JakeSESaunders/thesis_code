@@ -21,7 +21,9 @@ dyer_lashof_s_modmod_2 = lambda I, x, upper: extend_dl(dl_ops_on_generators_s_mo
 def dl_ops_on_generators_powers_of_2(k, P, upper=False):
   if upper == True:
     k -= PowersOfTwo.degree(P)
-  
+    if k < 0:
+      return PowersOfTwo.zero()
+
   x, I = P
   inadmissible_operation = tuple([k] + list(I))
   if len(I) == 0 or k <= I[0]:

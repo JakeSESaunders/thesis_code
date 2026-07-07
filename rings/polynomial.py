@@ -1,5 +1,7 @@
 from combinatorics.partitions import get_ordered_partitions
 from functools import cache
+from config import STRING_POLY_USES_POWERS
+from collections import Counter
 
 # Base class for a graded polynomial ring with addition mod 2.
 # Objects of this class are elements of the polynomial ring.
@@ -130,14 +132,21 @@ class PolyRing:
     # Add a string part for each summand.
     for summand in self.summands:
       result_summand = ""
-      for factor in summand:
-        result_summand += self.__class__.symbol(factor) # Add a string part for each factor.
+      counter = Counter(summand)
+      for factor in counter:
+        if counter[factor] == 1:
+          result_summand += self.__class__.symbol(factor)
+        else:
+          result_summand += f"({self.__class__.symbol(factor)})^{counter[factor]}"
+
       if len(summand) == 0:
         result_summand = "1"
+
       if len(result) == 0:
         result = result_summand
       else:
         result += f" + {result_summand}"
+
     return result
 
   def __hash__(self):

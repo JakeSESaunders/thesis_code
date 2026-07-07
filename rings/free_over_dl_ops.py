@@ -1,5 +1,6 @@
 from rings.polynomial import PolyRing
 from combinatorics.admissible import is_tuple_of_nondecreasing_positive_integers
+from combinatorics.indices import is_power_of_two
 
 # The ring H_*\S//2.
 # Generators are tuples of non-decreasing positive integers (lower index notation).
@@ -74,6 +75,31 @@ class PowersOfTwo(PolyRing):
     return True
 
   @classmethod
+  def generator(cls, P):
+    n, I = P
+
+    if len(I) == 0:
+      return PowersOfTwo([
+        (
+          (n, ())
+        )
+      ])
+
+    # deal with the case that some number of the leading terms is zero
+    leading_zeros = 0
+    while leading_zeros < len(I) and I[leading_zeros] == 0:
+      leading_zeros += 1
+
+    if leading_zeros == len(I):
+      return PowersOfTwo.x(n)**(2**leading_zeros)
+
+    operation = [(
+      I[leading_zeros:], 
+    )]
+    P_new = (n, operation)
+    return cls(P_new)**(2**leading_zeros)
+
+  @classmethod
   def degree(cls, P):
     if not cls.is_valid_generator(P):
       raise ValueError(f"Cannot determine degree of invalid generator {P}.")
@@ -92,8 +118,21 @@ class PowersOfTwo(PolyRing):
       operation = f"{operation}Q_{I[i]}"
     return f"{operation}{result}"
 
-  def x(i):
-    return PowersOfTwo.generator((i, ()))
+  def x(i, specified_power=True):
+    if specified_power:
+      return PowersOfTwo.generator((i, ()))
+    else:
+      j = is_power_of_two(i)
+      if j is None:
+        raise ValueError(f"Specified generator {j} is not a power of 2.")
+      return PowersOfTwo.x(j, specified_power=True)
 
-  def Q(I, x):
-    return PowersOfTwo.generator((x, I))
+  def Q(I, x, specified_power=True):
+    if specified_power:
+      return PowersOfTwo.generator((x, I))
+    else:
+      j = is_power_of_two(x)
+      if j is None:
+        raise ValueError(f"Specified generator {j} is not a power of 2.")
+      return PowersOfTwo.Q(I, j, specified_power=True)
+    

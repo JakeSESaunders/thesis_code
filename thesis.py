@@ -24,3 +24,5 @@ print(Q6e2)
 # Lemma 4.3.10
 Q10e2 = dyer_lashof(10, e2, upper=True)
 print(Q10e2)
+
+# Table TODO

@@ -2,6 +2,7 @@ from combinatorics.partitions import get_ordered_partitions
 from functools import cache
 from config import STRING_POLY_USES_POWERS
 from collections import Counter
+from dyer_lashof.formal import DL
 
 # Base class for a graded polynomial ring with addition mod 2.
 # Objects of this class are elements of the polynomial ring.
@@ -50,6 +51,7 @@ class PolyRing:
   def degree_of_summand(cls, summand):
     degree_of_summand = 0
     for factor in summand:
+      assert isinstance(cls.degree(factor), int) # TODO sort out
       degree_of_summand += cls.degree(factor)
     return degree_of_summand
 
@@ -137,7 +139,10 @@ class PolyRing:
         if counter[factor] == 1:
           result_summand += self.__class__.symbol(factor)
         else:
-          result_summand += f"({self.__class__.symbol(factor)})^{counter[factor]}"
+          if isinstance(factor, DL) and len(factor.operation) != 0:
+            result_summand += f"({self.__class__.symbol(factor)})^{{{counter[factor]}}}"
+          else:  
+            result_summand += f"{self.__class__.symbol(factor)}^{{{counter[factor]}}}"
 
       if len(summand) == 0:
         result_summand = "1"

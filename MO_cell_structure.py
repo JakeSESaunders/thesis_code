@@ -1,34 +1,14 @@
 from functools import cache
 from math import floor, log2
 from combinatorics.indices import is_power_of_two
-from rings.free_over_dl_ops import PowersOfTwo
-
-# Operation is a list of integers, generator is an integer
-# Q_1Q_2Q_3x_4 is DL([1, 2, 3], 4)
-class DL:
-  def __init__(self, operation, generator):
-    self.operation = operation
-    self.generator = generator
-
-  def __str__(self):
-    result = ""
-    length = len(self.operation)
-    for i in range(0, length):
-      result += f"Q_{self.operation[i]}"
-    result += f"x_{self.generator}"
-    return result
-
-  def Q(self, i):
-    new_operation = self.operation.copy()
-    new_operation.insert(0, i)
-    return DL(new_operation, self.generator)
+from dyer_lashof.formal import DL
 
 @cache
 def get_classes_in_degree(n):
   result = []
   k = is_power_of_two(n)
   if k is not None:
-    result.append(DL([], n))
+    result.append(DL([], n, upper=False))
   for i in range(1, floor(n/2) + 1):
     difference = n - 2*i
     if difference == 0:

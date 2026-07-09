@@ -1,39 +1,30 @@
-from rings.free_over_dl_ops import SModMod2, PowersOfTwo
+from rings.free_over_dl_ops import FreeOverDLAlg
+from dyer_lashof.formal import DL
+from rings.free_over_dl_ops import SModMod2
 from dyer_lashof.adem import adem_sequence
 from dyer_lashof.extend import extend_dl
 
-def dl_ops_on_generators_s_modmod_2(k, I, upper=False):
-  if upper == True:
-    k -= SModMod2.degree(I)
-  inadmissible_operation = tuple([k] + list(I))
-  if k <= I[0]:
-    return SModMod2.generator(inadmissible_operation)
-  
-  admissible_operations = adem_sequence(inadmissible_operation)
-  result = SModMod2.zero()
-  for operation in admissible_operations:
-    result += SModMod2.generator(operation)
+def dl_ops_on_generators_free_over_dl_ops(R, k, dl_op: DL, upper):
+  dl_op = dl_op.to_lower()
+  if upper:
+    k -= dl_op.degree()
+  if k < 0:
+    return R.zero()
+    
+  adem = dl_op.Q(k).adem()
+  return sum(
+    [R.generator(admissible_op) for admissible_op in adem],
+    R.zero()
+  )
 
-  return result
+def dl_ops_free(R, I, x, upper):
+  return extend_dl(
+    lambda _k, _dl_op, _upper: dl_ops_on_generators_free_over_dl_ops(R, _k, _dl_op, _upper),
+    I,
+    x,
+    upper
+  )
 
-dyer_lashof_s_modmod_2 = lambda I, x, upper: extend_dl(dl_ops_on_generators_s_modmod_2, I, x, upper)
-
-def dl_ops_on_generators_powers_of_2(k, P, upper=False):
-  if upper == True:
-    k -= PowersOfTwo.degree(P)
-    if k < 0:
-      return PowersOfTwo.zero()
-
-  x, I = P
-  inadmissible_operation = tuple([k] + list(I))
-  if len(I) == 0 or k <= I[0]:
-    return PowersOfTwo.generator((x, inadmissible_operation))
-  
-  admissible_operations = adem_sequence(inadmissible_operation)
-  result = PowersOfTwo.zero()
-  for operation in admissible_operations:
-    result += PowersOfTwo.generator((x, operation))
-
-  return result
-
-dyer_lashof_powers_of_two = lambda I, x, upper: extend_dl(dl_ops_on_generators_powers_of_2, I, x, upper)
+dyer_lashof_free = lambda I, x, upper: dl_ops_free(FreeOverDLAlg, I, x, upper)
+dyer_lashof_s_modmod_2 = lambda I, x, upper: dl_ops_free(SModMod2, I, x, upper)
+dyer_lashof_powers_of_two = lambda I, x, upper: dl_ops_free(PowersOfTwo, I, x, upper)

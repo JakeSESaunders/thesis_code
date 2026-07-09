@@ -2,13 +2,13 @@ from power_series.power_series import PowerSeries
 from rings.free_over_dl_ops import PowersOfTwo
 from combinatorics.indices import is_power_of_two
 from power_series.dyer_lashof import dl_power_series
-from dyer_lashof.free_over_dl_ops import dl_ops_on_generators_powers_of_2
+from dyer_lashof.free_over_dl_ops import dyer_lashof_powers_of_two
 
 # TODO a lot of this is copied from s_modmod_2_spherical.py. Would be good to have a common abstraction.
 
 def Qx_2_pow_i(i):  
   x2_i = PowersOfTwo.x(i, specified_power=True)
-  return dl_power_series(dl_ops_on_generators_powers_of_2, x2_i) # Returns Qx_{2^i}(t)
+  return dl_power_series(dyer_lashof_powers_of_two, x2_i) # Returns Qx_{2^i}(t)
 
 def X_coeffs(d):
   i = is_power_of_two(d)

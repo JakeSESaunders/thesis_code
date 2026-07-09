@@ -5,7 +5,7 @@ from config import DISPLAY_DOLD_MANIFOLD_INDICES_MANIFOLD_BASIS
 
 class HomologyMO(NatPolyRing):
   def symbol(i):
-    return f"e_{i}"
+    return f"e_{{{i}}}"
 
   def e(i):
     return HomologyMO.generator(i)
@@ -40,13 +40,13 @@ class TensorCohomologyBO(Tensor):
 
 def get_manifold_basis_symbol(i):
   if i % 2 == 0:
-    return f"[RP^{i}]"
+    return f"[\RP^{{{i}}}]"
   index = is_one_less_than_power_of_two(i)
   if index is None:
     if DISPLAY_DOLD_MANIFOLD_INDICES_MANIFOLD_BASIS:
       r, s = get_dold_manifold_indices_for_degree(i)
       return f"[P({r}, {s})]"
-    return f"[M_{i}]"
+    return f"[M_{{{i}}}]"
   if i == 1:
     return "(e_1)"
   if i == 3:

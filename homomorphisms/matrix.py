@@ -1,13 +1,22 @@
 from functools import cache
-from homomorphisms.image import image
+from homomorphisms.image import extend_multiplicatively
 import numpy as np
 from sympy import Matrix
+from collections.abc import Callable
 
-# Let R be a poly ring with generators x_i, and S some vector space.
-# Let f be a function from int to S with f(i) encoding the image of the generator R.
-# Return the matrix encoding the function f. 
+# NOTE these functions take PolyRings and Tensors as arguments, so 
+# NOTE the type of the Matrix argument is unclear.
+
 @cache
-def to_matrix(f, R, S, degree):
+def to_matrix(f, R: type, S: type, degree: int):
+  """Let R and S be rings. If f is a function encoding the image of a linear map R -> S on the generators of R, then extend f to a monomials basis of R in degree d, and obtain the corresponding matrix in the canonical bases of R and S.
+  
+  Keyword arguments:
+  f: a function encoding the image of a linear map R -> S on the generators of R.
+  R: a type implementing get_basis, addition and multiplication (a PolyRing or Tensor).
+  S: a type implementing get_basis, addition and multiplication (a PolyRing or Tensor).
+  degree: the total degree of monomials to use as bases for R and S. 
+  """
   R_basis = R.get_basis(degree)
   dim_R = len(R_basis)
   S_basis = S.get_basis(degree)
@@ -17,21 +26,29 @@ def to_matrix(f, R, S, degree):
   
   for i in range(dim_R):
     r = R_basis[i]
-    f_r = image(f, r, S)
+    f_r = extend_multiplicatively(f, r, S)
     for j in range(dim_S):
-      s = S_basis[j].summands[0] # NOTE for now let's say by convention the basis is just products of generators.
+      s = S_basis[j].summands[0]
       if s in f_r.summands:
         matrix[i][j] = 1
   return matrix
 
-# Suppose given a matrix representing any linear map from R -> S
-# Return the corresponding function, defined on arbitrary polynomials.
-def from_matrix(M, R, S, degree):
+def from_matrix(M, R: type, S: type, degree: int) -> Callable:
+  """Suppose given a matrix representing any linear map from R -> S
+  Return the corresponding function, defined on arbitrary polynomials.
+  
+  Keyword arguments:
+  M: a matrix. Must have dimensions given by the sizes of the bases of R and S in degree d.
+  f: a function encoding the image of a linear map R -> S on the generators of R.
+  R: a type implementing get_basis, addition, multiplication and get_summands_as_polys (a PolyRing or Tensor).
+  S: a type implementing get_basis, addition and multiplication (a PolyRing or Tensor).
+  degree: the total degree of monomials to use as bases for R and S.
+  """
   def f(r):
     if len(r.summands) == 0:
       return S.zero()
     if not len(r.summands) == 1:
-      return sum([f(x) for x in r.get_summands_as_polys], S.zero())
+      return sum([f(x) for x in r.get_summands_as_polys()], S.zero())
 
     # Now we know s has a single summand, and it's in the basis by assumption.
     r_degree = r.max_degree()
@@ -52,10 +69,10 @@ def from_matrix(M, R, S, degree):
 
   return f
 
-# Suppose f is a homomorphism from R to S
-# Apply the dual, sending s* to the sum of r* s.t. <s*, f(r)> = 1
 @cache
-def dual(f, s, R):
+def dual(f: Callable, s, R: type):
+  """Suppose f is a homomorphism from R to S
+  Apply the dual, sending s* to the sum of those r* s.t. <s*, f(r)> = 1"""
   S = s.__class__
   if len(s.summands) == 0:
     return R.zero()
@@ -67,7 +84,8 @@ def dual(f, s, R):
   return from_matrix(M, S, R, degree)(s)
 
 @cache
-def inverse(f, s, R):
+def inverse(f: Callable, s, R: type):
+  """Given an isomorphism f, use matrix inversion to get f^{-1}(s) \in R. Errors badly if f isn't an isomorphism."""
   S = s.__class__
   if len(s.summands) == 0:
     return R.zero()

@@ -2,11 +2,14 @@ from collections import Counter
 from config import DEBUG
 from itertools import permutations
 
+# TODO change terminology in this file to use order_depedent/order_indepednent.
+
 # TODO update this file to use functools cache
 PARTITIONS = {}
 ENUMERATED = {}
 
-def enumerate_partition(partition):
+def enumerate_partition(partition: tuple[int]) -> int:
+  """Returns the index of this partition in the list of partitions. Useful for ordering bases of PolyRings."""
   global ENUMERATED
   n = sum(partition)
   
@@ -24,7 +27,7 @@ def enumerate_partition(partition):
 
 # Populate the global dictionary PARTITIONS with the ordered partitions of integers.
 # NOTE This can only get into the 30s with any speed.
-def load_ordered_partitions(n):
+def load_ordered_partitions(n: int) -> list[tuple[int]]:
   global PARTITIONS
   if n in PARTITIONS:
     return
@@ -51,13 +54,17 @@ def load_ordered_partitions(n):
   # print(f"Loaded partitions of {n}.")
   PARTITIONS[n] = result
 
-def get_ordered_partitions(n):
+def get_ordered_partitions(n: int) -> list[tuple[int]]:
   global PARTITIONS
   if n not in PARTITIONS:
     load_ordered_partitions(n)
   return PARTITIONS[n]
 
-def get_unordered_partitions(n):
+def get_unordered_partitions(n: int) -> list[tuple[int]]:
+  """Return a list of unordered partitions of n.
+  
+  For example, (1, 2) and (2, 1) are distinct as unordered partitions.
+  """
   ordered_partitions = get_ordered_partitions(n)
   unordered_partitions = []
   for partition in ordered_partitions:
@@ -68,7 +75,7 @@ def get_unordered_partitions(n):
         unordered_partitions.append(tuple_perm)
   return unordered_partitions
 
-def to_weighted_partition(partition, n):
+def to_weighted_partition(partition: tuple[int], n: int) -> tuple[int]:
   weights = Counter(partition)
   weighted_partition = []
   for i in range(1, n + 1):
@@ -78,13 +85,18 @@ def to_weighted_partition(partition, n):
       weighted_partition.append(0)
   return tuple(weighted_partition)
 
-def to_partition(weighted_partition, n):
+# TODO is this the same as getting the conjugate???
+def to_partition(weighted_partition: tuple[int], n: int=-1) -> tuple[int]:
+  """Convert the partition (a_1, a_2, \dots, a_n) to a partition containing 1 a_1 times, 2 a_2 times, etc."""
+  if n == -1:
+    n = weighted_total(weighted_partition)
   partition = []
   for i in range(n):
     partition += [i + 1 for j in range(weighted_partition[i])]
   return tuple(partition)
 
-def get_dual(partition):
+def get_conjugate(partition: tuple[int]) -> tuple[int]:
+  """Return the conjugate partition."""
   dual_partition = []
   for n in range(1, max(partition) + 1):
     count_greater_than_or_equal_to_n = 0
@@ -96,8 +108,11 @@ def get_dual(partition):
   dual_partition.sort()
   return tuple(dual_partition)
 
-# Returns a list of lists [a_1, \dots, a_k] such that the weighted sum 1a_1 + 2a_2 + ... + ka_k = n NOTE this has 0 indexing
-def get_weighted_partitions(n):
+def get_weighted_partitions(n: int) -> list[tuple[int]]:
+  """
+  Returns a list of tuples (a_1, \dots, a_k) such that the weighted sum 1a_1 + 2a_2 + ... + ka_k = n.
+  Note that a_1 is the 0th element of the tuple.
+  """
   if n == 0:
     return [()]
   weighted_partitions = []
@@ -106,10 +121,12 @@ def get_weighted_partitions(n):
     weighted_partitions.append(to_weighted_partition(partition, n))
   return weighted_partitions
 
-def total(partition):
+def total(partition: tuple[int]) -> int:
+  """Return the sum of the parts of partition."""
   return sum(partition)
 
-def weighted_total(weighted_partition):
+def weighted_total(weighted_partition: tuple[int]) -> int:
+  """Given a partition (a_1, a_2, a_3, \dots, a_n), return 1a_1 + 2a_2 + ... + na_n."""
   total = 0
   for i in range(len(weighted_partition)):
     total += (i + 1) * weighted_partition[i]

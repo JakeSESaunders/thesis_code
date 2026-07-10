@@ -1,73 +1,110 @@
 from rings.polynomial import PolyRing
+from dyer_lashof.monomial import DyerLashofMonomial
 from combinatorics.admissible import is_tuple_of_nondecreasing_positive_integers
 from combinatorics.indices import is_power_of_two
-from dyer_lashof.formal import DL
 
-# Currently only supports having at most one class in each degree.
+class FormalDLOp:
+  """A pair consisting of an operation and a generator. Used for ease of type checking for free algebras over the Dyer--Lashof operations."""
+  def __init__(self, QI: DyerLashofMonomial, x):
+    """Keyword arguments:
+    QI: A Dyer--Lashof monomial. Must be lower indexed and reduced (no leading zeros).
+    x: An object representing a generator of the ring under the Dyer--Lashof algebra. 
+    """
+    if not QI.lower: raise ValueError("Upper indexing notation is not supported.")
+    if not QI.is_reduced(): raise ValueError("Unreduced operations are not supported.")
+    self.QI = QI
+    self.x = x
+
+  def Q(self, k: int):
+    return FormalDLOp(self.QI.Q(k), self.x)
+
+  def __lt__(self, other):
+    if not isinstance(other, FormalDLOp): raise ValueError(f"Cannot compare formal Dyer--Lashof operation {self} with non-operation {other}.")
+    return (self.x < other.x) or (self.QI < other.QI)
+
 class FreeOverDLAlg(PolyRing):
-  def is_valid_generator(dl_op):
-    if not isinstance(dl_op, DL):
-      return False
-    if not dl_op.lower:
-      return False
-    if not dl_op.is_reduced():
-      return False
-    return True # child classes can implement further restrictions.
+  def is_valid_dl_generator(x) -> bool:
+    """Return if x is a valid generator for this ring under the Dyer--Lashof operations, i.e. is Q_Ix a valid generator for this ring?"""
+    return True
 
   @classmethod
-  def generator(cls, dl_op: DL):
-    leading_zeros, shorter_op = dl_op.strip_leading_zeros() # Deal with any leading zeros.
-    return cls([(shorter_op, )])**(2**leading_zeros)
+  def is_valid_generator(cls, dl_op: FormalDLOp) -> bool:
+    if not isinstance(dl_op, FormalDLOp):
+      return False
+    return cls.is_valid_dl_generator(dl_op.x)
 
-  def x(n: int):
-    return FreeOverDLAlg.generator(
-      DL.from_generator(n, upper=False)
-    )
-
-  # See above for parameters.
-  # I is lower indexing.
-  def Q(I, n: int):
-    if isinstance(I, list):
-      I = tuple(I)
-    if not isinstance(I, tuple):
-      I = [I]
-      
-    return FreeOverDLAlg.generator(
-      DL(list(I), n, upper=False)
+  @classmethod
+  def dl_generator(cls, x):
+    return cls.generator(
+      FormalDLOp(DyerLashofMonomial.empty(upper=False), x)
     )
 
   @classmethod
-  def degree(cls, dl_op: DL):
-    return dl_op.degree()
+  def generator(cls, dl_op: FormalDLOp):
+    leading_zeros, QI_shorter = dl_op.QI.strip_leading_zeros() # Deal with any leading zeros.
+    return cls([(FormalDLOp(QI_shorter, dl_op.x), )])**(2**leading_zeros)
 
-  def symbol(dl_op: DL):
-    return str(dl_op)
+  @classmethod
+  def degree_of_dl_generator(cls, x) -> int:
+    """Degree of a generator for the ring under the Dyer--Lashof operations."""
+    raise NotImplementedError("Base class FreeOverDLAlg does not implement degree_of_dl_generator.")
 
-# The ring H_*\S//2.
-# Generators are classes dl_op of type DL such that dl_op.generator = 1.
-class SModMod2(FreeOverDLAlg):
-  def is_valid_generator(dl_op):
-    return dl_op.generator == 1 and FreeOverDLAlg.is_valid_generator(dl_op)
+  @classmethod
+  def degree(cls, dl_op: FormalDLOp) -> int:
+    d = cls.degree_of_dl_generator(dl_op.x)
+    return dl_op.QI.degree(d)
 
-  def symbol(dl_op: DL):
-    result = 'a'
-    operation = ''
-    for i in reversed(dl_op.operation):
-        operation = f"{operation}Q_{i}"
-    return f"{operation}{result}"
+  def symbol_dl_generator(x) -> str:
+    raise NotImplementedError("Base class FreeOverDLAlg does not implement symbol_dl_generator.")
+
+  @classmethod
+  def symbol(cls, dl_op: FormalDLOp) -> str:
+    return f"{dl_op.QI}{cls.symbol_dl_generator(dl_op.x)}" # TODO implement config.
+
+  @classmethod
+  def QIx(cls, I: tuple[int], x):
+    return cls.generator(
+      FormalDLOp(DyerLashofMonomial(I, upper=False), x)
+    )
+
+class NatFreeOverDLAlg(FreeOverDLAlg):
+  """Subclass of FreeOverDLAlg, representing a ring having at most one Dyer--Lashof generator in each positive degree."""
+  def is_valid_dl_generator(n: int):
+    return isinstance(n, int) and n > 0
+
+  @classmethod
+  def degree_of_dl_generator(cls, n: int) -> int:
+    return n
+
+class SModMod2(NatFreeOverDLAlg):
+  """The ring H_*\S//2. The only Dyer--Lashof generator is a, in degree 1."""
+  def is_valid_dl_generator(x):
+    return (x == 1)
+
+  def symbol_dl_generator(x):
+    return "a"
 
   def a():
-    return SModMod2.generator(
-      DL.from_generator(1)
-    )
+    return SModMod2.dl_generator(1)
 
-  def Q(I: tuple):
-    return SModMod2.generator(
-      DL(list(I), 1)
-    )
+  def Qa(I):
+    if isinstance(I, int):
+      I = (I, )
+    if not isinstance(I, tuple[int]):
+      raise ValueError("Operation must consist of an integer/a tuple of integers.")
+    return SModMod2.QIx(I, SModMod2.a())
 
-""" # The ring H_*Y^0, free over the DL ops on generators in degree 1, 2, 4, 8, ... (powers of 2).
-# Generators are classes dl_op of type DL such that dl_op.generator is a power of 2.
-class PowersOfTwo(FreeOverDLAlg):
-  def is_valid_generator(dl_op):
-    return (is_power_of_two(dl_op.generator) is not None) and FreeOverDLAlg.is_valid_generator(dl_op) """
+class FreePowersOfTwo(NatFreeOverDLAlg):
+  """The ring H_*Y^0, free over the DL ops on generators in degree 1, 2, 4, 8, ... (powers of 2)."""
+  def is_valid_dl_generator(x: int):
+    if not isinstance(x, int):
+      return False
+
+    i = is_power_of_two(x)
+    return (i is not None)
+
+  def symbol_dl_generator(n: int):
+    return f"x_{n}" # TODO make compatible with config.
+
+  def x(n):
+    return FreePowersOfTwo.dl_generator(n)

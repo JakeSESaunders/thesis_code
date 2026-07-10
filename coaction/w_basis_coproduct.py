@@ -1,12 +1,13 @@
 from rings.bo import CohomologyBO, TensorCohomologyBO
-from homomorphisms.image import image
+from homomorphisms.image import extend_multiplicatively
 from functools import cache
 
 def w(i):
   return CohomologyBO.w(i)
 
 @cache
-def coproduct_w(n):
+def coproduct_BO_on_generators(n):
+  """The comultiplication of H^*BO, on generators."""
   if n == 0:
     return TensorCohomologyBO.one()
   coproduct_of_generator_summands = []
@@ -20,4 +21,5 @@ def coproduct_w(n):
 # Returns the coproduct as a Tensor.
 @cache
 def coproduct(w_poly: CohomologyBO):
-  return image(coproduct_w, w_poly, TensorCohomologyBO)
+  """The comultiplication of H^*BO."""
+  return extend_multiplicatively(coproduct_BO_on_generators, w_poly, TensorCohomologyBO)

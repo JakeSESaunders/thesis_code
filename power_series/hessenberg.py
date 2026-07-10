@@ -1,20 +1,19 @@
-# Given an nxn matrix and 0 <= i < n, return the cofactor expanded along the top row.
-# Don't bother with signs --- assume everything is mod 2.
-# Also don't bother checking if the matrix is square.
-def cofactor(M, i):
+# NOTE this function assumes everything is mod 2 and doesn't check that the matrix is square.
+def cofactor(M: list[list], i: int) -> list[list]:
+  """Given an nxn matrix M and 0 <= i < n, return the cofactor expanded along the top row."""
   n = len(M)
   C = [
     M[j][:i] + M[j][(i + 1):] for j in range(1, n)
   ]
   return C
 
-# Given an length n list of length n lists, compute the determinant.
-# Do this recursively by Laplace expansion along the top row.
+# NOTE
 # Don't bother with signs --- assume everything is mod 2.
 # Check for zeros before computing.
 # Useful for Hessenberg matrices as most of these entries will be zero.
 # Doesn't check if the matrix is square.
-def determinant(M):
+def determinant(M: list[list]):
+  """Given an length n list of length n lists, compute the determinant recursively by Laplace expansion along the top row."""
   n = len(M)
   if n == 1:
     return M[0][0]
@@ -43,7 +42,8 @@ def determinant(M):
   a_n   ...   ... ... a_1
 ]
 """
-def hessenberg(L):
+def hessenberg(L: list):
+  """Return the Hessenberg matrix corresponding to the list L = [a_1, a_2, ..., a_n]."""
   R = L[0].__class__
   n = len(L)
   if n == 1:
@@ -62,8 +62,8 @@ def hessenberg(L):
   )
   return big_hessenberg
 
-# Uses Hessenberg determinants to compute the coefficients of the multiplicative inverse of a power series
-# See e.g. Inselberg - On determinants of Toeplitz--Hessenberg matrices arising in power series.
-def hessenberg_det(L):
+def hessenberg_det(L: list):
+  """Uses Hessenberg determinants to compute the coefficients of the multiplicative inverse of a power series
+  See e.g. Inselberg - On determinants of Toeplitz--Hessenberg matrices arising in power series."""
   H = hessenberg(L)
   return determinant(H)

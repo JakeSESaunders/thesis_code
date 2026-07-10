@@ -1,11 +1,13 @@
 from rings.bo import HomologyMO
 from combinatorics.partitions import get_weighted_partitions, to_partition
 from combinatorics.multinomial import multinomial_mod_2, binomial_mod_2
+from dyer_lashof.monomial import DyerLashofMonomial
 from dyer_lashof.extend import extend_dl
 
-# Implements the calculation of Priddy, Corollary 2.3.
-# Uses upper indexing, though this agrees with lower indexing as the degree of e_0^{-1} is 0.
 def dyer_lashof_e_0_inverse(n):
+  """Implements the calculation of Q^ne_0^{-1} due to Priddy, Corollary 2.3.
+
+  Uses upper indexing, though this agrees with lower indexing as the degree of e_0^{-1} is 0."""
   if n < 0:
     raise ValueError("Dyer--Lashof operations with negative index are undefined.")
 
@@ -18,9 +20,10 @@ def dyer_lashof_e_0_inverse(n):
       Qne0_inverse += HomologyMO.from_partition(to_partition(ll, n))
   return Qne0_inverse
 
-# Implements the calculation of Priddy, Theorem 1.1
-# Uses upper indexing.
 def dyer_lashof_e_k_one_component(n, k):
+  """Implements the calculation of Q^ne_k due to Priddy, Theorem 1.1.
+
+  Uses upper indexing."""
   if n < k:
     return HomologyMO.zero()
   if n == k:
@@ -39,14 +42,18 @@ def dyer_lashof_e_k_one_component(n, k):
     Qnek += HomologyMO.from_partition(tuple(summand))
   return Qnek
 
-# Uses the Cartan formula to compute Q^ne_0^{-1}e_k = \sum_{i + j = n}Q^ie_0^{-1}Q^je_k
-def dyer_lashof_single_indeterminate(n, k, upper=True):
+def dyer_lashof_single_indeterminate(n: int, upper: bool, k: int) -> HomologyMO:
+  """Uses the Cartan formula to compute Q^ne_0^{-1}e_k = \sum_{i + j = k}Q^ie_0^{-1}Q^je_n.
+
+  NOTE: Usually we use n as a generator and k as an operation, but here we use Priddy's notation for ease of comparison."""
   if not upper:
-    k = k + n
+    n = n + k
   result = HomologyMO.zero()
   for i in range(0, n + 1):
     j = n - i
     result += dyer_lashof_e_0_inverse(i) * dyer_lashof_e_k_one_component(j, k)
   return result
 
-dyer_lashof = lambda I, x, upper=False: extend_dl(dyer_lashof_single_indeterminate, I, x, upper)
+def dyer_lashof_HMO(QI: DyerLashofMonomial, x: HomologyMO) -> HomologyMO:
+  """Compute the result of QIx in H_*MO."""
+  return extend_dl(dyer_lashof_single_indeterminate, QI, x)

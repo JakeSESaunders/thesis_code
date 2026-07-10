@@ -1,75 +1,74 @@
-from rings.polynomial import NatPolyRing
+from rings.nat_polynomial import NatPolyRing
 from rings.tensor import Tensor
-from combinatorics.indices import is_one_less_than_power_of_two, get_dold_manifold_indices_for_degree
-from config import DISPLAY_DOLD_MANIFOLD_INDICES_MANIFOLD_BASIS
+from combinatorics.indices import is_one_less_than_power_of_two
+from strings.manifold_string import get_manifold_basis_symbol
+from config import SURROUND_INDICES_WITH_BRACES
 
 class HomologyMO(NatPolyRing):
-  def symbol(i):
-    return f"e_{{{i}}}"
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    if SURROUND_INDICES_WITH_BRACES:
+      return f"e_{{{i}}}"
+    return f"e_{i}"
 
-  def e(i):
+  def e(i: int):
     return HomologyMO.generator(i)
 
+class CohomologyBO(NatPolyRing):
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    if SURROUND_INDICES_WITH_BRACES:
+      return f"w_{{{i}}}"
+    return f"w_{i}"
+
+  def w(i: int):
+    return CohomologyBO.generator(i)
+
+class TensorCohomologyBO(Tensor):
+  @classmethod
+  def get_basis(cls, degree: int) -> list:
+    return super().get_basis(CohomologyBO, CohomologyBO, degree)
+
+  @classmethod
+  def one(cls, R=CohomologyBO, S=CohomologyBO):
+    return TensorCohomologyBO.from_factors(CohomologyBO.one(), CohomologyBO.one())
+
+class HomotopyMO(NatPolyRing):
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    if not HomotopyMO.is_valid_generator(i): raise ValueError(f"Cannot find symbol for invalid generator {i}.")
+    return get_manifold_basis_symbol(i)
+
+  @classmethod
+  def is_valid_generator(cls, i: int) -> bool:
+    return (is_one_less_than_power_of_two(i) is None)
+
+class HomologyMOManifoldBasis(NatPolyRing):
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    return get_manifold_basis_symbol(i)
+
+  def M(i: int):
+    return HomologyMOManifoldBasis.generator(i)
+
 class EulerHomology(NatPolyRing):
-  def symbol(i):
-    if i != 2:
-      raise ValueError(f"Cannot find symbol for invalid generator {i}.")
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    if i != 2: raise ValueError(f"Cannot find symbol for invalid generator {i}.")
     return "t"
 
-  def is_valid_generator(i):
+  @classmethod
+  def is_valid_generator(cls, i: int) -> bool:
     return (i == 2)
 
   def t():
     return EulerHomology.generator(2)
 
-class CohomologyBO(NatPolyRing):
-  def symbol(i):
-    return f"w_{i}"
-
-  def w(i):
-    return CohomologyBO.generator(i)
-
-class TensorCohomologyBO(Tensor):
-  @classmethod
-  def get_basis(cls, degree):
-    return super().get_basis(CohomologyBO, CohomologyBO, degree)
-
-  @classmethod
-  def one(cls, R=CohomologyBO, S=CohomologyBO):
-    return TensorCohomologyBO([(CohomologyBO.one(), CohomologyBO.one())])
-
-def get_manifold_basis_symbol(i):
-  if i % 2 == 0:
-    return f"[\RP^{{{i}}}]"
-  index = is_one_less_than_power_of_two(i)
-  if index is None:
-    if DISPLAY_DOLD_MANIFOLD_INDICES_MANIFOLD_BASIS:
-      r, s = get_dold_manifold_indices_for_degree(i)
-      return f"[P({r}, {s})]"
-    return f"[M_{{{i}}}]"
-  if i == 1:
-    return "(e_1)"
-  if i == 3:
-    return "(Q_1e_1)"
-  return f"(Q_1^{index - 1}e_1)"
-
-class HomotopyMO(NatPolyRing):
-  def symbol(i):
-    return get_manifold_basis_symbol(i)
-
-  def is_valid_generator(i):
-    return (is_one_less_than_power_of_two(i) is None)
-
-class HomologyMOManifoldBasis(NatPolyRing):
-  def symbol(i):
-    return get_manifold_basis_symbol(i)
-
-  def M(i):
-    return HomologyMOManifoldBasis.generator(i)
-
+# TODO
 class HomologyMOBinaryBasis(NatPolyRing):
-  def symbol(i):
+  @classmethod
+  def symbol(cls, i: int) -> str:
     return f"[B_{i}]" # TODO
 
-  def B(i):
+  def B(i: int):
     return HomologyMOBinaryBasis.generator(i)

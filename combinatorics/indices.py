@@ -1,8 +1,10 @@
 # If n = 2^i - 1, return n. Otherwise, return None.
-def is_one_less_than_power_of_two(n):
+def is_one_less_than_power_of_two(n: int) -> int | None:
+  """If n = 2**i - 1, return i. Otherwise, return None."""
   return is_power_of_two(n + 1)
 
-def is_power_of_two(n):
+def is_power_of_two(n: int) -> int | None:
+  """If n = 2**i, return i. Otherwise, return None."""
   i = 0
   while 2**i <= n:
     if 2**i == n:
@@ -10,7 +12,8 @@ def is_power_of_two(n):
     i += 1
   return None
 
-def get_dold_manifold_indices_for_degree(n):
+def get_dold_manifold_indices_for_degree(n: int) -> int:
+  """If n is odd and n != 2**i - 1 for every i, return the Dold manifold indices for n. Otherwise, raise an error."""
   r = 1
   while 2**r < n + 1:
     if (n + 1) % (2**r) == 0:

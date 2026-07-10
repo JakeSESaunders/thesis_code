@@ -1,6 +1,6 @@
 from functools import cache
 from homomorphisms.matrix import dual, from_matrix
-from homomorphisms.w_basis_coproduct import coproduct
+from coaction.w_basis_coproduct import coproduct
 from rings.bo import CohomologyBO, HomologyMO, TensorCohomologyBO
 import numpy as np
 from sympy import Matrix
@@ -10,13 +10,15 @@ def w(i):
   return CohomologyBO.w(i)
 
 @cache
-def multiply_two_monomials(left, right):
+def multiply_two_monomials(left: tuple[int], right: tuple[int]) -> CohomologyBO:
+  """Given two monomials left and right, return the sum of the monomials in H^*BO that include left \otimes right as a summand."""
   f = lambda i: coproduct(w(i))
   s = TensorCohomologyBO.from_factors(left, right)
   return dual(f, s, CohomologyBO)
 
 @cache
-def multiply_two_polynomials(left, right):
+def multiply_two_polynomials(left: CohomologyBO, right: CohomologyBO) -> CohomologyBO:
+  """Given two polynomials left and right, return the sum of the monomials in H^*BO that include left \otimes right as a summand."""
   result = CohomologyBO.zero()
   for summand in left.get_summands_as_polys():
     for other_summand in right.get_summands_as_polys():
@@ -27,6 +29,7 @@ def multiply_two_polynomials(left, right):
 
 @cache
 def change_of_basis_matrix_e_to_w(degree):
+  """Get the numpy array representing the duality linear map from the e-basis of H_*MO to the w-basis of H^*BO."""
   homology_basis = HomologyMO.get_basis(degree)
   homology_dim = len(homology_basis)
   cohomology_basis = CohomologyBO.get_basis(degree)
@@ -57,7 +60,8 @@ def change_of_basis_matrix_e_to_w(degree):
   return matrix
 
 @cache
-def change_basis_e_to_w(r):
+def change_basis_e_to_w(r: HomologyMO) -> CohomologyBO:
+  """Given r \in H_*MO, return the linear dual r* \in H^*BO."""
   R = HomologyMO
   S = CohomologyBO
   if len(r.summands) == 0:
@@ -70,7 +74,8 @@ def change_basis_e_to_w(r):
   return from_matrix(M, R, S, degree)(r)
 
 @cache
-def change_basis_w_to_e(s):
+def change_basis_w_to_e(s: CohomologyBO) -> HomologyMO:
+  """Given r \in H^*BO, return the linear dual r* \in H_*MO."""
   R = HomologyMO
   S = CohomologyBO
   if len(s.summands) == 0:

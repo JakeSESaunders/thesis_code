@@ -2,10 +2,14 @@ from combinatorics.partitions import get_unordered_partitions, get_weighted_part
 from combinatorics.multinomial import multinomial
 from power_series.hessenberg import hessenberg_det
 from config import NON_CONSTANT_TERMS_OF_POWER_SERIES_TO_DISPLAY
+from collections.abc import Callable
+from rings.polynomial import PolyRing
 
-# A power series with R coefficients consists of a function int -> R which sends i to the i-coefficient of the power series.
 class PowerSeries:
-  def __init__(self, coeff: callable):
+  """A power series with coefficients in a polynomial ring"""
+  def __init__(self, coeff: Callable[[int], PolyRing]):
+    """Keyword arguments:
+    coeff: function int -> R which sends i to the i-coefficient of the power series."""
     self.coeff = coeff
     self.R = coeff(0).__class__ # NOTE vulnerable to the series having mixed coefficients!
 
@@ -52,13 +56,15 @@ class PowerSeries:
     result = f"{result} + ..."
     return result
     
-  def constant(r):
+  def constant(r: PolyRing):
+    """Return the power series with r as constant coefficient and all other coefficients zero."""
     R = r.__class__
     return PowerSeries(lambda i: r if i == 0 else R.zero())
 
-  # returns a shifted power series, so the coefficient of t^i becomes the coefficient of t^n.
-  # works for negative n too, provided the 0, 1, ..., n - 1 coefficients are all zero.
-  def shift(self, n):
+  def shift(self, n: int):
+    """Shift the power series, so that the constant coefficient becomes the t^n coefficient.
+    Works for negative n too, provided the 0, 1, ..., n - 1 coefficients are all zero.
+    """
     R = self.R
     if n == 0:
       return self
@@ -86,9 +92,10 @@ class PowerSeries:
 
     return result
 
-  # Obtain the composition inverse using lagrange inversion.
-  # Only valid for power series with constant coeff 0 and linear coeff 1
+  # 
   def composition_inverse(self):
+    """Obtain the composition inverse using Lagrange inversion.
+    Only valid for power series with constant coeff 0 and linear coeff 1"""
     R = self.R
     if self.coeff(0) != R.zero():
       raise ValueError("Cannot find composition inverse of power series with non-zero constant coefficient.")
@@ -116,10 +123,11 @@ class PowerSeries:
 
     return PowerSeries(coeffs_of_comp_inverse)
 
-  # Obtain the multiplicative inverse using Hessenberg determinants
-  # see e.g. Inselberg - On determinants of Toeplitz--Hessenberg matrices arising in power series
   # NOTE could redo this to use enumerative formula from Aguiar--Ardila
   def multiplicative_inverse(self):
+    """Obtain the multiplicative inverse of this power series using Hessenberg determinants.
+    Only valid for power series with constant coefficient 1.
+    See e.g. Inselberg - On determinants of Toeplitz--Hessenberg matrices arising in power series."""
     R = self.R
     if self.coeff(0) != R.one():
       raise ValueError("Cannot find multiplicative inverse of power series with non-unit constant coefficient.")
@@ -131,9 +139,9 @@ class PowerSeries:
       )
     return PowerSeries(coeffs_of_mult_inverse)
 
-  # if self = f(t) and other = g(t), returns the composite (f \circ g)(t)
-  # uses faa di bruno (see e.g https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula#Formal_power_series_version)
   def circ(self, other):
+    """If self = f(t) and other = g(t), returns the composite (f \circ g)(t)."""
+    """Uses Faa di Bruno (see e.g https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula#Formal_power_series_version)"""
     if not isinstance(other, PowerSeries):
       raise ValueError(f"Cannot compose power series {self} with non-power series {other}.")
     if other.R != self.R:

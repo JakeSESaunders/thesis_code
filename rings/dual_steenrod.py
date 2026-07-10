@@ -1,41 +1,43 @@
-from rings.polynomial import NatPolyRing
+from rings.nat_polynomial import NatPolyRing
 from combinatorics.indices import is_one_less_than_power_of_two
 from functools import cache
 from rings.tensor import Tensor
+from strings.dual_steenrod_string import get_dual_steenrod_symbol
 
 class BaseDualSteenrod(NatPolyRing):
-  def is_valid_generator(i):
+  @classmethod
+  def is_valid_generator(cls, i: int) -> bool:
     return (is_one_less_than_power_of_two(i) is not None)
 
 class DualSteenrod(BaseDualSteenrod):
-  def symbol(i):
-    index = is_one_less_than_power_of_two(i)
-    return f"ξ_{index}"
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    return get_dual_steenrod_symbol(True, i)
 
-  def xi(i):
-    return DualSteenrod([(2**i - 1, )])
+  def xi(i: int):
+    return DualSteenrod.generator(2**i - 1)
+
+class DualSteenrodConjugate(BaseDualSteenrod):
+  @classmethod
+  def symbol(cls, i: int) -> str:
+    return get_dual_steenrod_symbol(False, i)
+
+  def zeta(i: int):
+    return DualSteenrodConjugate.generator(2**i - 1)
 
 class DualSteenrodTensorSquare(Tensor):
   @classmethod
-  def get_basis(cls, degree):
+  def get_basis(cls, degree: int) -> list:
     return super().get_basis(DualSteenrod, DualSteenrod, degree)
 
   @classmethod
   def one(cls, R=DualSteenrod, S=DualSteenrod):
-    return DualSteenrodTensorSquare([(DualSteenrod.one(), DualSteenrod.one())])
+    return DualSteenrodTensorSquare.from_factors(DualSteenrod.one(), DualSteenrod.one())
 
-class DualSteenrodConjugate(BaseDualSteenrod):
-  def symbol(i):
-    index = is_one_less_than_power_of_two(i)
-    return f"ζ_{index}"
-
-  def zeta(i):
-    return DualSteenrodConjugate([(2**i - 1, )])
-
-# Returns the polynomial in the xi basis given by zeta n, according to the inductive formula given in the proof of
-# Milnor - The Steenrod algebra and its dual, Lemma 10
+# 
 @cache
-def xi_to_zeta(n):
+def xi_to_zeta(n: int):
+  """Returns the polynomial in the xi basis given by zeta n, according to the inductive formula given in the proof of Milnor - The Steenrod algebra and its dual, Lemma 10."""
   if n == 0 or n == 1:
     return DualSteenrodConjugate.zeta(n)
   summands = [
@@ -44,11 +46,12 @@ def xi_to_zeta(n):
   summands.append(DualSteenrodConjugate.zeta(n))
   return sum(summands, DualSteenrodConjugate.zero())
 
-
 class DualSteenrodDLOp(BaseDualSteenrod):
-  def symbol(i):
+  @classmethod
+  def symbol(cls, i: int) -> str:
     index = is_one_less_than_power_of_two(i)
-    return f"Q_1^{index}xi_1"
+    return f"Q_1^{index}xi_1" # TODO replace with DL monomial string generation code.
 
-  def Q(i):
-    return DualSteenrodDLOp([(i, )])
+  def Q(i: int):
+    """Return the generator Q_1^i\xi_1."""
+    return DualSteenrodDLOp.generator(2**(i + 1) - 1)

@@ -1,69 +1,84 @@
-from combinatorics.partitions import get_ordered_partitions
 from functools import cache
-from config import STRING_POLY_USES_POWERS
 from collections import Counter
-from dyer_lashof.formal import DL
+from strings.polynomial_string import polynomial_to_string
 
 # Base class for a graded polynomial ring with addition mod 2.
 # Objects of this class are elements of the polynomial ring.
 # "summands" is a list of sorted tuples representing summands of a polynomial.
-# It should contain no duplicates as we are working mod 2, and this could break equality!
 # The default implementation sorts the list of summands and each tuple of factors, but does not check for duplicates.
 # We instead check this when performing arithmetic operations.
 # Each element of the tuple should be a "generator", a hashable type with equality and a comparison (le/ge) dunder method, such that is_valid_generator returns True. 
 # By convention, zero has summands [] and one has summands [()].
 class PolyRing:
-  def __init__(self, summands):
-    new_summands = []
-    for summand in summands:
+  """An element of a polynomial ring over F2, the field with 2 elements.
+  
+  Keyword arguments:
+  summands -- A list of tuples (containing no duplicates), each tuple consisting of generators of the polynomial ring.
+  """
+  def __init__(self, summands: list[tuple]):
+    R = self.__class__
+
+    new_summands = [] # a list of sorted summands
+    counter = Counter(summands)
+    for summand in counter:
+      # check the input for duplicates
+      if counter[summand] != 1: raise ValueError(f"List of summands may not contain duplicates: summand {summand} appeared {counter[summand]} times.")
       new_summand = []
+
+      # check for invalid generators
       for factor in summand:
-        if not self.__class__.is_valid_generator(factor):
-          raise ValueError(f"Generator with index {factor} is not valid.")
+        if not R.is_valid_generator(factor): raise ValueError(f"Summand {summand} contains invalid generator {factor}.")
         new_summand.append(factor)
+      
       new_summands.append(tuple(sorted(new_summand)))
     self.summands = sorted(new_summands)
 
-  def is_valid_generator(x):
+  @classmethod
+  def is_valid_generator(cls, x) -> bool:
+    """Returns a bool indicating if the parameter x can be interpreted as a generator of this polynomial ring."""
     return True
 
   @classmethod
   @cache
-  def get_basis(cls, degree):
+  def get_basis(cls, degree: int) -> list:
+    """Returns an additive basis of this PolyRing in the given degree. The basis elements must consist of classes with a single summand."""
     raise NotImplementedError("Base class PolyRing does not implement get_basis.") 
 
   @classmethod
-  def generator(cls, i):
-    if i == 0:
-      return cls.one()
-    return cls([(i, )])
+  def generator(cls, x):
+    """Return the element of this polynomial ring with a single summand having single factor x."""
+    return cls([(x, )])
 
-  # given generator x, return the degree of x.
   @classmethod
-  def degree(cls, x):
-    if not cls.is_valid_generator(x):
-      raise ValueError(f"Cannot determine degree of invalid generator {x}.")
+  def degree(cls, x) -> int:
+    """Given a generator x, return the degree of x."""
+    if not cls.is_valid_generator(x): raise ValueError(f"Cannot determine degree of invalid generator {x}.")
     raise NotImplementedError("Base class PolyRing does not implement degree.")
 
-  # when supplied with a tuple of generators, return the sum of their degrees, giving the degree of the summand.
-  # NOTE if the summand is empty, i.e. is 0, then this returns degree 0 rather than -\infty.
   @classmethod
-  def degree_of_summand(cls, summand):
+  def degree_of_summand(cls, summand) -> int:
+    """Return the degree of summand: the sum of the degrees of its factors.
+    If the summand is empty, i.e. is 0, then this returns 0 rather than -\infty.
+    
+    Keyword arguments:
+    summand: a tuple of generators of this polynomial ring.
+    """
     degree_of_summand = 0
+    if not isinstance(summand, tuple): raise ValueError(f"Cannot obtain degree of summand {summand} which is not a tuple of generators.")
     for factor in summand:
-      assert isinstance(cls.degree(factor), int) # TODO sort out
       degree_of_summand += cls.degree(factor)
     return degree_of_summand
 
   @classmethod
   def one(cls):
+    """Return the multiplicative identity of this polynomial ring."""
     return cls([()])
 
   @classmethod
   def zero(cls):
+    """Return the additive identity of this polynomial ring."""
     return cls([])
 
-  # NOTE vulnerable to poorly formed objects with e.g. summands that appear twice or have extra zeros.
   # TODO this could probably be faster.
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -76,128 +91,111 @@ class PolyRing:
     return True
 
   def __add__(self, other):
-    if not isinstance(other, self.__class__):
-      raise ValueError("{self} and {other} are not elements of the same ring.")
+    R = self.__class__
+    if not isinstance(other, R): raise ValueError("{self} and {other} are not elements of the same ring.")
+
     summands = self.summands.copy()
     for summand in other.summands:
       if summand in summands:
         summands.remove(summand)
       else:
         summands.append(summand)
-    return self.__class__(summands)
+    return R(summands)
 
   def __sub__(self, other):
     return self + other # we're mod 2 so + and - are the same.
 
   def __mul__(self, other):
-    cls = self.__class__
-    if not isinstance(other, cls):
-      raise ValueError("{self} and {other} are not elements of the same ring.")
-    # If there are no summands, the polynomial is zero.
+    R = self.__class__
+    if not isinstance(other, R): raise ValueError("{self} and {other} are not elements of the same ring.")
+    # If there are no summands, the polynomial is zcopy meero.
     if self.summands == [] or other.summands == []:
-      return cls.zero()
+      return R.zero()
 
     # If self has multiple summands, multiply each summand by other and add the result.
     if len(self.summands) > 1:
       polys = self.get_summands_as_polys()
-      return sum([poly * other for poly in polys], cls.zero())
+      return sum([poly * other for poly in polys], R.zero())
     
     # Do the same for other.
     if len(other.summands) > 1:
       polys = other.get_summands_as_polys()
-      return sum([self * poly for poly in polys], cls.zero())
+      return sum([self * poly for poly in polys], R.zero())
     
     # Now self and other both have only a single summand.
     summand_1 = self.summands[0]
     summand_2 = other.summands[0]
     
     product = tuple(sorted(summand_1 + summand_2))
-    return cls([product])
+    return R([product])
 
   def __pow__(self, other):
-    if not isinstance(other, int):
-      raise ValueError(f"Cannot raise polynomial to the power of non-integer value {other}.")
+    if not isinstance(other, int): raise ValueError(f"Cannot raise polynomial to the power of non-integer value {other}.")
+    if other < 0: raise ValueError(f"Cannot raise polynomial to the power of negative integer {other}.")
     result = self.__class__.one()
     for i in range(0, other):
       result *= self
     return result
 
-  # Returns the string symbol to use for the generator x.
-  def symbol(x):
+  @classmethod
+  def symbol(cls, x) -> str:
+    """Return the string symbol to use for the generator x."""
     raise NotImplementedError("Function symbol not implemented for base PolyRing class.")
 
   def __str__(self):
-    if len(self.summands) == 0:
-      return "0"
-
-    result = ""
-    # Add a string part for each summand.
-    for summand in self.summands:
-      result_summand = ""
-      counter = Counter(summand)
-      for factor in counter:
-        if counter[factor] == 1:
-          result_summand += self.__class__.symbol(factor)
-        else:
-          if isinstance(factor, DL) and len(factor.operation) != 0:
-            result_summand += f"({self.__class__.symbol(factor)})^{{{counter[factor]}}}"
-          else:  
-            result_summand += f"{self.__class__.symbol(factor)}^{{{counter[factor]}}}"
-
-      if len(summand) == 0:
-        result_summand = "1"
-
-      if len(result) == 0:
-        result = result_summand
-      else:
-        result += f" + {result_summand}"
-
-    return result
+    R = self.__class__
+    return polynomial_to_string(R.symbol, self.summands)
 
   def __hash__(self):
     return f"{self.__class__.__name__}, {self.__str__()}".__hash__()
 
-  def max_degree(self):
-    cls = self.__class__
+  def max_degree(self) -> int:
+    """Returns the maximum degree of all summands of a polynomial."""
+    R = self.__class__
     current_max = 0
     for summand in self.summands:
-      degree_of_summand = cls.degree_of_summand(summand)
+      degree_of_summand = R.degree_of_summand(summand)
       current_max = max(current_max, degree_of_summand)
     return current_max
 
-  def is_homogeneous(self):
-    cls = self.__class__
+  def is_homogeneous(self) -> bool:
+    """Returns true if all summands of this polynomial have the same degree."""
+    R = self.__class__
 
     if len(self.summands) == 0:
       return True
 
     zeroth_summand = self.summands[0]
-    degree_of_zeroth_summand = cls.degree_of_summand(zeroth_summand)
+    degree_of_zeroth_summand = R.degree_of_summand(zeroth_summand)
     for summand in self.summands:
-      if degree_of_zeroth_summand != cls.degree_of_summand(summand):
+      if degree_of_zeroth_summand != R.degree_of_summand(summand):
         return False
 
     return True
 
-  def get_homogeneous_part(self, d):
-    cls = self.__class__
+  def get_homogeneous_part(self, d: int):
+    """Returns the homogeneous polynomial consisting of the degree d summands."""
+    R = self.__class__
 
-    result = cls.one()
+    result = R.one()
     for summand in self.summands:
-      degree = cls.degree_of_summand(summand)
+      degree = R.degree_of_summand(summand)
       if degree == d:
-        result += cls([summand])
+        result += R([summand])
     
     return result
 
   # Return a list of homogeneous summands.
   # Quicker than repeating get_homogeneous_part several times as we only iterate once.
-  def get_homogeneous(self):
-    cls = self.__class__
+  def get_homogeneous(self) -> list:
+    """Returns a list of polynomials, each of which is a homogeneous summand of the specified polynomial.
+    This is quicker than calling get_homogeneous_part several times as we only iterate once.
+    """
+    R = self.__class__
 
     summands_by_degree = {}
     for summand in self.summands:
-      degree = cls.degree_of_summand(summand)
+      degree = R.degree_of_summand(summand)
       if degree not in summands_by_degree:
         summands_by_degree[degree] = [summand]
       else:
@@ -205,60 +203,11 @@ class PolyRing:
     
     homogeneous_polys = []
     for degree in summands_by_degree:
-      homogeneous_part_for_degree = cls(summands_by_degree[degree])
+      homogeneous_part_for_degree = R(summands_by_degree[degree])
       homogeneous_polys.append(homogeneous_part_for_degree)
     return homogeneous_polys
 
-  def get_summands_as_polys(self):
-    cls = self.__class__
-    return [cls([summand]) for summand in self.summands]
-
-# Base class for polynomial rings with at most one generator in each positive integer degree.
-class NatPolyRing(PolyRing):
-  def __init__(self, summands):
-    new_summands = []
-    for summand in summands:
-      new_summand = []
-      for factor in summand:
-        if factor == 0:
-          continue # NOTE If every factor is 0, then we add an empty tuple to the summands, and this represents 1, as expected, since e.g. e_0 = 1.
-        if factor < 0:
-          raise ValueError("Negative indices are not supported.")
-        if not self.__class__.is_valid_generator(factor):
-          raise ValueError(f"Generator with index {factor} is not valid.")
-        new_summand.append(factor)
-      new_summands.append(tuple(sorted(new_summand)))
-    self.summands = sorted(new_summands)
-
-  def is_valid_generator(i):
-    if not isinstance(i, int):
-      return False
-    if i < 0:
-      return False
-    return True # NOTE we deal with generator with index 0 appropriately
-
-  @classmethod
-  def degree(cls, x):
-    if not cls.is_valid_generator(x):
-      raise ValueError("Cannot get degree of non-integer value {x}.")
-    return x
-
-  @classmethod
-  @cache
-  def get_basis(cls, degree):
-    basis = []
-    for partition in get_ordered_partitions(degree):
-      partition_is_valid = True
-      for part in partition:
-        if not cls.is_valid_generator(part):
-          partition_is_valid = False
-          break
-      if partition_is_valid:
-        basis.append(
-          cls.from_partition(partition)
-        )
-    return basis
-
-  @classmethod
-  def from_partition(cls, partition):
-    return cls([partition])
+  def get_summands_as_polys(self) -> list:
+    """Returns a list of monomials which are the summands of the specified polynomial."""
+    R = self.__class__
+    return [R([summand]) for summand in self.summands]

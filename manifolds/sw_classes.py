@@ -2,21 +2,24 @@ from rings.truncated_poly import TruncPoly, TruncPolySignature
 from combinatorics.multinomial import binomial_mod_2
 from config import DEBUG
 
-def signature_cohomology_projective_space(d):
+def signature_cohomology_projective_space(d: int) -> TruncPolySignature:
+  """Return the signature of the cohomology ring of \RP^d."""
   return TruncPolySignature(
     [1],
     [d + 1],
     ["a"]
   )
 
-def signature_cohomology_dold_manifold(m, n):
+def signature_cohomology_dold_manifold(m: int, n: int) -> TruncPolySignature:
+  """Return the signature of the cohomology ring of the Dold manifold P(m, n)."""
   return TruncPolySignature(
     [1, 2],
     [m + 1, n + 1],
     ["c", "d"]
   )
 
-def tangential_sw_classes_projective_space(d):
+def tangential_sw_classes_projective_space(d: int) -> TruncPoly:
+  """Return the total tangential Stiefel--Whitney class of \RP^d."""
   if DEBUG:
     print("Computing tangential SW classes for RP^{d}...")
   signature = signature_cohomology_projective_space(d)
@@ -31,7 +34,8 @@ def tangential_sw_classes_projective_space(d):
   )
 
 # Here, generator 0 is c and generator 1 is d.
-def tangential_sw_classes_dold_manifold(m, n):
+def tangential_sw_classes_dold_manifold(m: int, n: int) -> TruncPoly:
+  """Return the total tangential Stiefel--Whitney class of the Dold manifold P(m, n)."""
   signature = signature_cohomology_dold_manifold(m, n)
   left_factor = TruncPoly(
     signature,

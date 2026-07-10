@@ -1,9 +1,10 @@
 from power_series.power_series import PowerSeries
+from collections.abc import Callable
+from dyer_lashof.monomial import DyerLashofMonomial
+from rings.polynomial import PolyRing
 
-# Let x be a homogeneous element of a PolyRing R.
-# Suppose dyer_lashof sends (I, x, upper) to Q_Ir or Q^Ir (depending on upper).
-# This returns the power series x^2t^{\abs{x}} + Q_1xt^{\abs{x} + 1} + \cdots. 
-def dl_power_series(dyer_lashof, x):
+def dl_power_series(dyer_lashof: Callable[[DyerLashofMonomial, PolyRing], PolyRing], x: PolyRing):
+  """Given a homogeneous polynomial x (of degree d), return the power series whose t^0, ... t^{d - 1} coefficients are 0, and t^{d + k} coefficient is Q_kx."""
   if not x.is_homogeneous():
     raise ValueError(f"Cannot produce Dyer--Lashof power series for non-homogeneous element {x}.")
   
@@ -16,11 +17,10 @@ def dl_power_series(dyer_lashof, x):
     if coeff == degree:
       return x**2
 
-    operation = coeff - degree # TODO should this be a plus?
+    operation = DyerLashofMonomial.single(coeff - degree, upper=False)
     return dyer_lashof(
       operation,
-      x,
-      upper=False
+      x
     )
 
   return PowerSeries(Qx_coeff)
